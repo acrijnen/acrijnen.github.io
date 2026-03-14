@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berlin Art Map — March 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  #map { height: 100vh; width: 100%; }
+  .legend { background: white; padding: 2px 4px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); line-height: 1.1; font-size: 6px; }
+  .legend h4 { margin: 0 0 1px 0; font-size: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 2px; margin-bottom: 0; }
+  .legend-dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.3); flex-shrink: 0; }
+  .leaflet-control-zoom { margin-bottom: 2px !important; }
+  .leaflet-control-zoom a { width: 14px !important; height: 14px !important; line-height: 14px !important; font-size: 9px !important; }
+  .leaflet-popup-content { font-size: 13px; line-height: 1.5; }
+  .leaflet-popup-content strong { font-size: 14px; }
+  .leaflet-popup-content .show { color: #555; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map', { zoomControl: false }).setView([52.516, 13.39], 12);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
+
+const colors = {
+  gallery: '#e63946',
+  museum: '#457b9d',
+  concert: '#f4a261',
+  hidden: '#2a9d8f',
+  bookshop: '#6d597a',
+  restaurant: '#d4a017',
+  base: '#333333'
+};
+
+function icon(color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10]
+  });
+}
+
+const places = [
+  // GALLERIES (Art Basel)
+  { lat: 52.5258, lng: 13.3933, name: "Spruth Magers", type: "gallery", show: "Gretchen Bender: Political Entertainment (until Apr 4)", addr: "Oranienburger Str. 18", url: "https://spruethmagers.com" },
+  { lat: 52.5264, lng: 13.3928, name: "neugerriemschneider", type: "gallery", show: "Thilo Heinzmann: Keep On (Mar 3 - Apr 4)", addr: "Linienstr. 155", url: "https://www.neugerriemschneider.com" },
+  { lat: 52.5046, lng: 13.3321, name: "Galerie Max Hetzler (Charlottenburg)", type: "gallery", show: "Jake Longstreth: Where We're Going We Need Roads (from Mar 13)", addr: "Bleibtreustr. 45", url: "https://www.maxhetzler.com" },
+  { lat: 52.5076, lng: 13.3597, name: "Galerie Max Hetzler (Mitte)", type: "gallery", show: "William N. Copley: X-rated (from Mar 13)", addr: "Goethestr. 2/3", url: "https://www.maxhetzler.com" },
+  { lat: 52.5078, lng: 13.3651, name: "Esther Schipper", type: "gallery", show: "Winter 2026 group — Demand, Huyghe, Parreno, Sala, Yi (Mar 3 - Apr 25)", addr: "Potsdamer Str. 77", url: "https://www.estherschipper.com" },
+  { lat: 52.4953, lng: 13.3916, name: "Konig Galerie (St. Agnes)", type: "gallery", show: "Franz Stein: Feels Like Spring (until Mar 22)", addr: "Alexandrinenstr. 118-121", url: "https://www.koeniggalerie.com" },
+  { lat: 52.5220, lng: 13.3970, name: "Konig Galerie (Telegraphenamt)", type: "gallery", show: "Joana Schneider: Eeuwen (from Mar 13)", addr: "Monbijoustr. 13", url: "https://www.koeniggalerie.com" },
+  { lat: 52.5040, lng: 13.3266, name: "Contemporary Fine Arts (CFA)", type: "gallery", show: "OOO LA LA — Hambling, Lucas (from Mar 13)", addr: "Grolmanstr. 32/33", url: "https://www.cfa-berlin.de" },
+  { lat: 52.5075, lng: 13.3620, name: "Barbara Wien", type: "gallery", show: "Robert Filliou: how to see (from Mar 7)", addr: "Schoneberger Ufer 65", url: "https://www.barbarawien.de" },
+  { lat: 52.5182, lng: 13.4218, name: "Galeria Plan B", type: "gallery", show: "Mihai Olos: The Knot (Feb 27 - Apr 18)", addr: "Strausberger Platz 1", url: "https://www.plan-b.ro" },
+  { lat: 52.5253, lng: 13.3889, name: "Galerie Eigen + Art", type: "gallery", show: "Check closer to date", addr: "Auguststr. 26", url: "https://www.eigen-art.com" },
+  { lat: 52.5305, lng: 13.3870, name: "Galerie Buchholz", type: "gallery", show: "Check closer to date", addr: "Fasanenstr. 30", url: "https://www.galeriebuchholz.de" },
+  { lat: 52.5118, lng: 13.3926, name: "carlier | gebauer", type: "gallery", show: "Jessica Rankin + Anna Bella Geiger (from Mar 14)", addr: "Markgrafenstr. 67", url: "https://www.carliergebauer.com" },
+  { lat: 52.5316, lng: 13.3870, name: "KOW", type: "gallery", show: "Check closer to date", addr: "Brunnenstr. 9", url: "https://www.kow-berlin.com" },
+  { lat: 52.5073, lng: 13.3615, name: "Galerie Isabella Bortolozzi", type: "gallery", show: "Check closer to date", addr: "Schoneberger Ufer 61", url: "https://www.bortolozzi.com" },
+  { lat: 52.5178, lng: 13.4210, name: "Capitain Petzel", type: "gallery", show: "In Other Realms (Feb 27 - Apr 11) — not at Art Basel Basel", addr: "Karl-Marx-Allee 45", url: "https://www.capitainpetzel.de" },
+
+  // MUSEUMS
+  { lat: 52.5074, lng: 13.3653, name: "Neue Nationalgalerie", type: "museum", show: "BRANCUSI — 150+ works (opens Mar 20). Art4All Mar 19 free 14-18", addr: "Potsdamer Str. 50", url: "https://www.smb.museum/en/museums-institutions/neue-nationalgalerie/home/" },
+  { lat: 52.5082, lng: 13.3614, name: "Gropius Bau", type: "museum", show: "Peter Hujar / Liz Deschenes: Persistence of Vision (opens Mar 19)", addr: "Niederkirchnerstr. 7", url: "https://www.berlinerfestspiele.de/en/gropius-bau/" },
+  { lat: 52.5286, lng: 13.3728, name: "Hamburger Bahnhof", type: "museum", show: "Beuys (until Mar 26) + Giulia Andreani (Feb 27 - Sep 13)", addr: "Invalidenstr. 50-51", url: "https://www.smb.museum/en/museums-institutions/hamburger-bahnhof/" },
+  { lat: 52.5256, lng: 13.3960, name: "KW Institute", type: "museum", show: "Klara Liden (3 floors) + Katambayi Mukendi + Else Marie Pade", addr: "Auguststr. 69", url: "https://www.kw-berlin.de/en/" },
+  { lat: 52.4993, lng: 13.3877, name: "Sammlung Boros", type: "museum", show: "CLOSED FOR CONSTRUCTION", addr: "Reinhardtstr. 20", url: "https://boros-collection.com/en/book-ticket" },
+  { lat: 52.5208, lng: 13.3970, name: "Bode Museum", type: "museum", show: "The Pazzi Conspiracy — Renaissance Florence + Sound Bodies", addr: "Am Kupfergraben 1", url: "https://www.smb.museum/en/museums-institutions/bode-museum/" },
+  { lat: 52.5085, lng: 13.3660, name: "Gemaldegalerie", type: "museum", show: "Gallery Looks: Fashion in Old Masters (until May 31)", addr: "Matthakirchplatz", url: "https://www.smb.museum/en/museums-institutions/gemaeldegalerie/" },
+  { lat: 52.5063, lng: 13.3347, name: "C/O Berlin", type: "museum", show: "Graciela Iturbide — 250 works (until Jun 10)", addr: "Hardenbergstr. 22-24", url: "https://www.co-berlin.org/en" },
+  { lat: 52.5168, lng: 13.3982, name: "Schinkel Pavillon", type: "museum", show: "Lesia Vasylchenko: YesterLight (Mar 13 - May 31)", addr: "Oberwallstr. 1", url: "https://www.schinkelpavillon.de" },
+  { lat: 52.4738, lng: 13.4490, name: "KINDL Centre", type: "museum", show: "Cornelia Parker + 3 shows. OPENING Mar 21 18-21h", addr: "Am Sudhaus 3, Neukolln", url: "https://www.kindl-berlin.com" },
+
+  // CONCERT VENUES
+  { lat: 52.5100, lng: 13.3700, name: "Philharmonie Berlin", type: "concert", show: "Mar 19: Salonen/Yuja Wang | Mar 21: DSO/Sacre | Mar 22: Elias + Mogilevsky", addr: "Herbert-von-Karajan-Str. 1", url: "https://www.berliner-philharmoniker.de/en/concerts/calendar/" },
+  { lat: 52.5135, lng: 13.3905, name: "Konzerthaus Berlin", type: "concert", show: "Mar 19: Espresso-Konzert 14:00 (Weber, Chausson, Schumann)", addr: "Gendarmenmarkt", url: "https://www.konzerthaus.de/en" },
+  { lat: 52.5191, lng: 13.4015, name: "Berliner Dom", type: "concert", show: "Stunde der Dommusik — free choral/organ, likely Sat ~18:00", addr: "Am Lustgarten", url: "https://www.berlinerdom.de/termine/" },
+
+  // HIDDEN SPACES
+  { lat: 52.4988, lng: 13.3810, name: "Feuerle Collection", type: "hidden", show: "WWII bunker — Chinese antiquities + contemporary. BOOK AHEAD. Fri-Sun", addr: "Hallesches Ufer 70", url: "https://www.thefeuerlecollection.org" },
+  { lat: 52.5470, lng: 13.3660, name: "Silent Green", type: "hidden", show: "Former crematorium. MaerzMusik venue. Betonhalle concerts", addr: "Gerichtstr. 35, Wedding", url: "https://www.silent-green.net/en/" },
+  { lat: 52.5465, lng: 13.3635, name: "Gerichtshofe Studios", type: "hidden", show: "70+ artist studios in converted courthouse. Walk the courtyards", addr: "Gerichtstr. 12-13, Wedding", url: "https://www.gerichtshoefe.de" },
+  { lat: 52.5450, lng: 13.3590, name: "EXROTAPRINT", type: "hidden", show: "Former printing press — artist cooperative", addr: "Gottschedstr. 4, Wedding", url: "https://www.exrotaprint.de" },
+
+  // BOOKSHOPS
+  { lat: 52.5215, lng: 13.3990, name: "Buchhandlung Walther Konig", type: "bookshop", show: "Exhibition catalogs, monographs, artist editions", addr: "Burgstr. 27 (Museumsinsel)", url: "https://www.buchhandlung-walther-koenig.de" },
+  { lat: 52.5258, lng: 13.3913, name: "Do You Read Me?!", type: "bookshop", show: "Curated independent art/architecture magazines", addr: "Auguststr. 28", url: "https://www.doyoureadme.de" },
+  { lat: 52.4978, lng: 13.4280, name: "Motto Books", type: "bookshop", show: "Artist books, zines, small-press (rear courtyard)", addr: "Skalitzer Str. 68", url: "https://www.mottodistribution.com" },
+  { lat: 52.5265, lng: 13.4025, name: "Pro qm", type: "bookshop", show: "Architecture, design, art, political theory (50%+ English)", addr: "Almstadtstr. 48-50", url: "https://www.pro-qm.de" },
+  { lat: 52.5040, lng: 13.3630, name: "Hopscotch Reading Room", type: "bookshop", show: "Non-Western, diasporic perspectives (courtyard)", addr: "Kurfurstenstr. 14, Haus B" },
+
+  // RESTAURANTS
+  { lat: 52.5065, lng: 13.3230, name: "Lovis", type: "restaurant", show: "Former women's prison (19th c.), Hotel Wilmina. Chef Sophia Rudolph — inventive German. Courtyard with wildflowers. Michelin-listed but relaxed", addr: "Kantstr. 79", url: "https://lovisrestaurant.com/en/" },
+  { lat: 52.5035, lng: 13.3310, name: "Wintergarten im Literaturhaus", type: "restaurant", show: "19th-century villa with garden. Cafe-restaurant at Berlin's literary house. Relaxed, civilized, unpretentious", addr: "Fasanenstr. 23", url: "https://www.literaturhaus-berlin.de/wintergarten-cafe-restaurant.html" },
+  { lat: 52.5145, lng: 13.3065, name: "Kurpfalz-Weinstuben", type: "restaurant", show: "Historic Palatinate wine tavern, 75+ years. Traditional German, excellent wine, warm wood interior", addr: "Wilmersdorfer Str. 93", url: "" },
+  { lat: 52.4885, lng: 13.4275, name: "EINS44", type: "restaurant", show: "Former Essenzen distillery. High ceilings, raw walls, open kitchen. Modern German-French. Closest to De Goudfazant in Berlin", addr: "Elbestr. 28/29, Neukölln", url: "https://www.eins44.de" },
+  { lat: 52.5175, lng: 13.3645, name: "Weltwirtschaft", type: "restaurant", show: "Restaurant at Haus der Kulturen der Welt. Modern space, international kitchen, Tiergarten views", addr: "John-Foster-Dulles-Allee 10", url: "https://weltwirtschaft.berlin/en/restaurant-2/" },
+
+  // BASE (hotel, station)
+  { lat: 52.5070, lng: 13.3280, name: "Waldorf Astoria Berlin", type: "base", show: "Hotel", addr: "Hardenbergstr. 28" },
+  { lat: 52.4995, lng: 13.3175, name: "Leonardo Hotel Ku'damm", type: "base", show: "Hotel", addr: "Brandenburgische Str. 57" },
+  { lat: 52.5251, lng: 13.3694, name: "Berlin Hauptbahnhof", type: "base", show: "Main train station", addr: "Europaplatz 1" },
+  { lat: 52.4340, lng: 13.2580, name: "Jo Scheeren", type: "base", show: "Personal", addr: "Am Hegewinkel 3, 14169 Berlin" }
+];
+
+places.forEach(p => {
+  const c = colors[p.type];
+  const label = p.type.charAt(0).toUpperCase() + p.type.slice(1);
+  const link = p.url ? `<a href="${p.url}" target="_blank" style="color:#457b9d;font-size:11px;">Website</a>` : '';
+  const transit = `<a href="https://www.bvg.de/en/connection-search?to=${encodeURIComponent(p.addr + ', Berlin')}" target="_blank" style="color:#457b9d;font-size:11px;">BVG Route</a>`;
+  const links = [link, transit].filter(Boolean).join(' · ');
+  L.marker([p.lat, p.lng], { icon: icon(c) })
+    .addTo(map)
+    .bindPopup(`<strong>${p.name}</strong><br><small>${label} — ${p.addr}</small><div class="show">${p.show}</div><div style="margin-top:3px;">${links}</div>`);
+});
+
+// Neighbourhood oval — "Your Marais": Auguststr./Linienstr. corridor
+(function() {
+  const cx = 52.5260, cy = 13.3940;
+  const rx = 0.0045, ry = 0.0065;
+  const angle = 15 * Math.PI / 180;
+  const pts = [];
+  for (let i = 0; i < 64; i++) {
+    const t = (i / 64) * 2 * Math.PI;
+    const x = rx * Math.cos(t);
+    const y = ry * Math.sin(t);
+    pts.push([
+      cx + x * Math.cos(angle) - y * Math.sin(angle),
+      cy + x * Math.sin(angle) + y * Math.cos(angle)
+    ]);
+  }
+  L.polygon(pts, {
+    color: '#e07020',
+    weight: 2,
+    opacity: 0.7,
+    fillColor: '#e07020',
+    fillOpacity: 0.08,
+    dashArray: '8 4'
+  }).addTo(map).bindPopup('<strong>Your neighbourhood</strong><br>Auguststr. / Linienstr. corridor<br><small>Galleries, courtyards, independent shops, local cafes.<br>One block north of Hackescher Markt &mdash; not the tourist part.</small>');
+})();
+
+// Legend
+const legend = L.control({ position: 'topright' });
+legend.onAdd = function() {
+  const div = L.DomUtil.create('div', 'legend');
+  div.innerHTML = `
+    <h4>Berlin Art Map</h4>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.gallery}"></span> Galleries (Art Basel)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.museum}"></span> Museums</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.concert}"></span> Concert Venues</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.hidden}"></span> Hidden Spaces</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.bookshop}"></span> Bookshops</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.restaurant}"></span> Restaurants</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${colors.base}"></span> Hotel / Station</div>
+    <div style="margin-top:4px;font-size:7px;color:#888;">March 19-22, 2026</div>
+  `;
+  return div;
+};
+legend.addTo(map);
+
+// My Location button
+const locBtn = L.control({ position: 'bottomright' });
+locBtn.onAdd = function() {
+  const btn = L.DomUtil.create('div');
+  btn.innerHTML = '<div style="background:white;width:14px;height:14px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;" title="My location">&#9737;</div>';
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    map.locate({ setView: true, maxZoom: 15 });
+  };
+  return btn;
+};
+locBtn.addTo(map);
+
+let locMarker;
+map.on('locationfound', function(e) {
+  if (locMarker) map.removeLayer(locMarker);
+  locMarker = L.circleMarker(e.latlng, { radius: 6, color: '#4285f4', fillColor: '#4285f4', fillOpacity: 0.9, weight: 2 }).addTo(map).bindPopup('You are here').openPopup();
+});
+map.on('locationerror', function() { alert('Location not available — check browser permissions'); });
+</script>
+</body>
+</html>
